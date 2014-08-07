@@ -1,0 +1,10 @@
+#!/bin/bash
+CLASSPATH=.:/export/home/ozzy/XMediaStream/jdom.jar:/export/home/ozzy/XMediaStream/mysql-connector-java-5.1.5-bin.jar
+export CLASSPATH
+java XMediaStream_MulticastShoutcastClient multicast_shoutcast_client.xml >& XMediaStream_MulticastShoutcastClient.log &
+sleep 3
+java XMediaStream_TargetedMulticastShoutcastClient targeted_shoutcast_client.xml >& XMediaStream_TargetedMulticastShoutcastClient.log &
+sleep 3
+java XMediaStream_MulticastShoutcastServer multicast_shoutcast_server.xml >& XMediaStream_MulticastShoutcastServer.log &
+sleep 3
+java XMediaStream_MulticastShoutcastServer targeted_shoutcast_server.xml >& XMediaStream_TargetedMulticastShoutcastServer.log &

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE ssdp_listener SYSTEM "XMediaStream_SSDPListener.dtd">
+<ssdp_listener>
+    <txn_handler>
+        <hostname>192.168.0.19</hostname>
+        <port>7000</port>
+    </txn_handler>
+
+    <logging>
+        <enabled_levels>INFO WARNING ERROR</enabled_levels>
+    </logging>
+
+    <multicast>
+        <address>239.255.255.250</address>
+        <port>1900</port>
+    </multicast>
+</ssdp_listener>
+

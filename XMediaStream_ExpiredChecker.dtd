@@ -1,0 +1,12 @@
+<!ELEMENT ssdp_listener (mysql, general, txn_handler, logging)>
+<!ELEMENT mysql (hostname, username, password, database, port)>
+<!ELEMENT hostname (#PCDATA)>
+<!ELEMENT username (#PCDATA)>
+<!ELEMENT password (#PCDATA)>
+<!ELEMENT database (#PCDATA)>
+<!ELEMENT port (#PCDATA)>
+<!ELEMENT general (scan_period)>
+<!ELEMENT scan_period (#PCDATA)>
+<!ELEMENT logging (enabled_levels)>
+<!ELEMENT enabled_levels (#PCDATA)>
+<!ELEMENT txn_handler ( hostname, port)>

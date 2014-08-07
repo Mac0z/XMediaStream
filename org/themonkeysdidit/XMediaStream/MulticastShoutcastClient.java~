@@ -1,0 +1,181 @@
+/*
+ ******************************************************************************
+ *
+ * Copyright 2008 Oliver Wardell
+ * This file is part of XMediaStream.
+ *
+ ******************************************************************************
+ */
+ 
+package org.themonkeysdidit.XMediaStream;
+
+import java.sql.*;
+import org.themonkeysdidit.io.*;
+import org.themonkeysdidit.util.*;
+import org.themonkeysdidit.db.*;
+import java.util.*;
+import java.net.*;
+import java.io.*;
+
+public class MulticastShoutcastClient extends ShoutcastClient {
+    public MulticastShoutcastClient() {
+        PACKET_COUNT = 0;
+        initPadding();
+    }
+    
+    public MulticastShoutcastClient(ConfigReader cfg) {
+        
+        if(!super.storeConfig(cfg) || !storeConfig(cfg)) {
+            Logger.log("ERROR", "Unable to read config, exiting...");
+            System.exit(1);
+        }
+        
+        PACKET_COUNT = 0;
+        DBH = new MySQL_DatabaseHandler();
+        initPadding();
+    }
+    
+    public void initMulticastTransceiver() throws UnknownHostException, IOException {
+        Logger.log("DEBUG", "Creating MulticastTransceiver with values: " + MCAST_ADDRESS + " " + MCAST_PORT);
+        MCAST_TRANS = new MulticastTransceiver(MCAST_ADDRESS, MCAST_PORT, TTL);
+    }
+    
+    protected void streamSong(String filePath, int musicId) throws FileNotFoundException, IOException, SQLException {
+        // Open the file
+        FileInputStream fin = new FileInputStream(filePath);
+        
+        int bitRate = getBitRate(musicId);
+        
+        // Read  bytes
+        while(true) {
+            long start = System.currentTimeMillis();
+            byte[] data = new byte[(bitRate)/8];
+            int bytesRead = fin.read(data);
+            if(bytesRead == -1) {
+                Logger.log("DEBUG", "File sent");
+                break;
+            }
+            
+            sendPacket(data, bytesRead, getSongName(musicId));
+            long end = System.currentTimeMillis();
+
+            // We've sent 1s worth fo data according to the bitrate in the
+            // database, so sleep for a second to provide some simple flow control.
+            try {
+                long sleepTime = 1000 - (end - start);
+                sleepTime = (long) (sleepTime * 0.989); // Add % fudge factor
+                Logger.log("DEBUG", "Sleeping for " + Long.toString(sleepTime));
+                // If sleepTime is negative, we've spent longer than a second processing so
+                // don't sleep
+                if(sleepTime >0) {
+                	Thread.currentThread().sleep(sleepTime); // sleep for just less than 1s
+                }
+            }
+            catch(InterruptedException ie) {
+                // If we are interrupted, it doesn't matter so
+                // just carry on.
+            }
+        }
+        
+        fin.close();
+        // Send the padding to try and stop glitches on song transition
+        sendPacket(PADDING, PADDING.length, getSongName(musicId));
+    }
+    
+    protected boolean storeConfig(ConfigReader cfg) {
+        if(!cfg.enterNode("multicast")) {
+            Logger.log("ERROR", "Unable to find multicast details in config");
+            return false;
+        }
+        else {
+            if(!storeMulticastDetails(cfg)) {
+                return false;
+            }
+            cfg.exitNode();
+        }
+        
+        return true;
+    }
+    
+    private boolean storeMulticastDetails(ConfigReader cfg) {
+        Logger.log("INFO", "Storing multicast details.");
+        if(!cfg.enterNode("address")) {
+            Logger.log("ERROR", "No multicast address specified.");
+            return false;
+        }
+        else {
+            MCAST_ADDRESS = cfg.getValue();
+            cfg.exitNode();
+        }
+        
+        if(!cfg.enterNode("port")) {
+            Logger.log("ERROR", "No multicast port specified.");
+            return false;
+        }
+        else {
+            MCAST_PORT = Integer.parseInt(cfg.getValue());
+            cfg.exitNode();
+        }
+        
+        if(!cfg.enterNode("ttl")) {
+            Logger.log("ERROR", "No ttl specified.");
+            return false;
+        }
+        else {
+            TTL = Integer.parseInt(cfg.getValue());
+            cfg.exitNode();
+        }
+        
+        return true;
+    }
+    
+    protected void sendPacket(byte[] data, int numBytes, String songName) throws UnknownHostException, IOException {
+        SimpleMessageObject smo = new SimpleMessageObject();
+        smo.addString("MESSAGE_TYPE", "MULTICAST_MUSIC_DATA");
+        smo.addString("TRACK_NAME", songName);
+        smo.addString("SOURCE_NAME", SOURCE_NAME);
+        if(numBytes == data.length) {
+            smo.addByteArray("DATA", data);
+        }
+        else {
+            byte[] buf = new byte[numBytes];
+            for(int i = 0 ; i < numBytes ; i++) {
+                buf[i] = data[i];
+            }
+            smo.addByteArray("DATA", buf);
+        }
+        MCAST_TRANS.transmit(smo);
+    }
+    
+    private int getBitRate(int musicId) throws SQLException {
+        String sql = new String("SELECT bit_rate FROM static_music_file WHERE music_id = ");
+        sql = sql.concat(Integer.toString(musicId));
+        DatabaseResult result = DBH.query(sql);
+        DataRow dr = result.getRow(0);
+        Integer bitRate = (Integer)dr.getValue("bit_rate");
+        return (bitRate.intValue());
+    }
+    
+    private void initPadding() {
+        PADDING = new byte[256];
+        for(int i = 0 ; i<PADDING.length ; i++) {
+            PADDING[0] = 0x00;
+        }
+    }
+    
+    private String getSongName(int musicId) throws SQLException{
+        String sql = "SELECT track_name FROM static_music_file WHERE music_id = ";
+        sql = sql.concat(Integer.toString(musicId));
+        DatabaseResult result = DBH.query(sql);
+        DataRow dr = result.getRow(0);
+        return (String)dr.getValue("track_name");
+    }
+    
+    private MulticastTransceiver MCAST_TRANS;
+    private String MCAST_ADDRESS;
+    private int MCAST_PORT;
+    private int TTL;
+    private int PACKET_COUNT;
+    private byte[] PADDING;
+
+}

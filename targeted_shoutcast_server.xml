@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE shoutcast_client SYSTEM "shoutcast_client.dtd">
+<shoutcast_client>
+    <mysql>
+        <hostname>localhost</hostname>
+        <username>xms</username>
+        <password>xms</password>
+        <database>XMediaStream_dev</database>
+        <port>3306</port>
+    </mysql>
+    
+    <general>
+        <poll_period>100</poll_period>
+        <listen_port>7778</listen_port>
+        <source_name>scanned</source_name>
+    </general>
+
+    <txn_handler>
+        <hostname>localhost</hostname>
+        <port>7000</port>
+    </txn_handler>
+
+    <logging>
+        <enabled_levels>INFO WARNING ERROR</enabled_levels>
+    </logging>
+
+    <multicast>
+        <address>224.0.1.2</address>
+        <port>1234</port>
+        <ttl>10</ttl>
+    </multicast>
+    
+</shoutcast_client>
+

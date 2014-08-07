@@ -1,0 +1,129 @@
+/*
+ ******************************************************************************
+ *
+ * Copyright 2009 Oliver Wardell
+ * This file is part of XMediaStream.
+ *
+ ******************************************************************************
+ */
+ 
+import java.net.*;
+import java.io.*;
+ 
+import org.themonkeysdidit.util.*;
+
+public class UPnP_DiscoveryListener {
+    public UPnP_DiscoveryListener(ConfigReader cfg) {
+        if(!storeConfig(cfg)) {
+            Logger.log("ERROR", "Unable to read config, exiting...");
+            System.exit(1);
+        }
+        
+    }
+    
+    public void startListening() {
+        
+        // Set up multicast details
+        configureMulticastSocket();
+
+        while(true) {
+            // Get a packet
+            SSDPPacket packet = receive();
+            
+            //process it
+            processSSDP(packet);
+        }
+
+    }
+    
+    private boolean storeConfig(ConfigReader cfg) {
+        
+        if(cfg.enterNode("multicast")) {
+            Logger.log("ERROR", "Unable to find multicast details ion config.");
+            return false;
+        }
+        else {
+            if(!storeMulticastDetails(cfg)) {
+                return false;
+            }
+            cfg.exitNode();
+        }
+        
+        if(!cfg.enterNode("txn_handler")) {
+            Logger.log("ERROR", "Unable to find txn_handler details in config.");
+            return false;
+        }
+        else {
+            if(!storeTxnHandlerDetails(cfg)) {
+                return false;
+            }
+            cfg.exitNode();
+        }
+    }
+    
+    private boolean storeMulticastDetails(ConfigReader cfg) {
+        Logger.log("INFO", "Storing multicast details.");
+        if(!cfg.enterNode("address")) {
+            Logger.log("ERROR", "No multicast address specified.");
+            return false;
+        }
+        else {
+            MCAST_ADDRESS = cfg.getValue();
+            cfg.exitNode();
+        }
+        
+        if(!cfg.enterNode("port")) {
+            Logger.log("ERROR", "No multicast port specified.");
+            return false;
+        }
+        else {
+            MCAST_PORT = Integer.parseInt(cfg.getValue());
+            cfg.exitNode();
+        }
+        
+        return true;
+    }
+    
+    private boolean storeTxnHandlerDetails(ConfigReader cfg) {
+        if(!cfg.enterNode("hostname")) {
+            Logger.log("ERROR", "No txn handler hostname defined.");
+            return false;
+        }
+        else {
+            TXN_HANDLER_HOSTNAME = cfg.getValue();
+            cfg.exitNode();
+        }
+        
+        if(!cfg.enterNode("port")) {
+            Logger.log("ERROR", "No txn handler port defined.");
+            return false;
+        }
+        else {
+            TXN_HANDLER_PORT = Integer.parseInt(cfg.getValue());
+            cfg.exitNode();
+        }
+        
+        return true;
+    }
+    
+    private void configureMulticastSocket() {
+        MSOCK = new MulticastSocket(MCAST_PORT);
+        MSOCK.joinGroup(MCAST_ADDRESS);
+    }
+    
+    private SSDPPacket receive() {
+        byte[] buffer = new byte[1024];
+        
+        DatagramPacket p = new DatagramPacket(buffer, buffer.length);
+        MSOCK.receive(p);
+        
+        return new SSDPPacket(p);
+    }
+    
+    private String MCAST_ADDRESS;
+    private int MCAST_PORT;
+    private String TXN_HANDLER_HOSTNAME;
+    private int TXN_HANDLER_PORT;
+    protected MySQL_DatabaseHandler DBH;
+    private MulticastSocket MCAST_SOCK;
+}

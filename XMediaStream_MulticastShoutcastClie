@@ -1,0 +1,5 @@
+LOG_LEVEL_INFO 20081021 20:52:22.820
+XMediaStream_MulticastShoutcastClient starting
+
+Exception in thread "main" java.lang.NoClassDefFoundError: org/jdom/JDOMException
+	at XMediaStream_MulticastShoutcastClient.main(XMediaStream_MulticastShoutcastClient.java:23)

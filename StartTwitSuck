@@ -1,0 +1,6 @@
+#!/bin/bash
+CLASSPATH=.:/export/home/ozzy/XMediaStream/jackson.jar:/export/home/ozzy/XMediaStream/jdom.jar:/export/home/ozzy/XMediaStream/mysql-connector-java-5.1.5-bin.jar
+export CLASSPATH
+java TwitSuck twitter_feed_reader.xml >& TwitSuck.log &
+java TwitTrender trender.xml >& TwitTrender.log &
+

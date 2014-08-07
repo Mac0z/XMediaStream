@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE txn_handler SYSTEM "txn_handler.dtd">
+<txn_handler>
+    <mysql>
+        <hostname>localhost</hostname>
+        <username>xms</username>
+        <password>xms</password>
+        <database>XMediaStream_dev</database>
+        <port>3306</port>
+    </mysql>
+    
+    <general>
+        <port>7000</port>
+        <updates_to_keep>1024</updates_to_keep>
+    </general>
+
+    <logging>
+	<enabled_levels>INFO WARNING ERROR</enabled_levels>
+    </logging>
+    
+</txn_handler>
+

@@ -1,0 +1,10 @@
+<!ELEMENT twitter_feed_reader (twitter, txn_handler, logging)>
+<!ELEMENT hostname (#PCDATA)>
+<!ELEMENT port (#PCDATA)>
+<!ELEMENT logging (enabled_levels)>
+<!ELEMENT enabled_levels (#PCDATA)>
+<!ELEMENT txn_handler ( hostname, port)>
+<!ELEMENT twitter ( feed_url, username, password)>
+<!ELEMENT feed_url (#PCDATA)>
+<!ELEMENT username (#PCDATA)>
+<!ELEMENT password (#PCDATA)>

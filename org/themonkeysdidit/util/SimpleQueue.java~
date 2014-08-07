@@ -1,0 +1,180 @@
+/*
+ ******************************************************************************
+ *
+ * Copyright 2009 Oliver Wardell
+ * This file is part of XMediaStream.
+ *
+ ******************************************************************************
+ */
+
+package org.themonkeysdidit.util;
+
+
+public class SimpleQueue {
+    public SimpleQueue() {
+        initQueue(DEFAULT_SIZE);
+        WRITE_PTR = 0;
+        READ_PTR = 0;
+        LAST_READ_TIME = now();
+        LAST_WRITE_TIME = now();
+    }
+    
+    public SimpleQueue(int size) {
+        initQueue(size);
+        WRITE_PTR = 0;
+        READ_PTR = 0;
+    }
+    
+    public Object get() {
+        while(isLocked() ) {
+            try {
+                Thread.sleep(10);
+            }
+            catch(InterruptedException ie) {
+                // do nothing
+            }
+        }
+        
+        Object retVal = getHead();
+        LAST_READ_TIME = now();
+        return retVal;
+    }
+    
+    public void add(Object o) {
+        Logger.log("DEBUG", "Data to add to queue: " + o.toString());
+        while(isLocked()) {
+            try {
+                Thread.sleep(10);
+            }
+            catch(InterruptedException ie) {
+                // do nothing
+            }
+        }
+        addToTail(o);
+        LAST_WRITE_TIME = now();
+    }
+    
+    public long getLastReadTime() {
+        return LAST_READ_TIME;
+    }
+    
+    public long getLastWriteTime() {
+        return LAST_WRITE_TIME;
+    }
+    
+    private void addToTail(Object o) {
+        
+        if(needToGrow()) {
+            growQueue();
+        }
+        
+        Logger.log("DEBUG", "Adding new object to Queue: " + o.toString());
+        lockQueue();
+        QUEUE[WRITE_PTR] = o;
+        WRITE_PTR++;
+        
+        if(WRITE_PTR == QUEUE.length) {
+            WRITE_PTR = 0;
+        }
+        unlockQueue();
+    }
+    
+    private boolean needToGrow() {
+        // We need to grow the queue if WRITE_PTR is not pointing
+        // at a null position
+        if(QUEUE[WRITE_PTR] != null) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    
+    private void growQueue() {
+        
+        // Grow the queue by 50%
+        int newSize = (int)(QUEUE.length * 1.5f);
+        
+        Logger.log("INFO", "Queue is full, growing to new size: " + Integer.toString(newSize));
+        
+        Object[] newQueue = new Object[newSize];
+        lockQueue();
+        copyQueue(newQueue);
+        unlockQueue();
+    }
+    
+    private void lockQueue() {
+        Logger.log("DEBUG", "Locking queue");
+        QUEUE_LOCKED = true;
+    }
+    
+    private void unlockQueue() {
+        Logger.log("DEBUG", "Unlocking queue");
+        QUEUE_LOCKED = false;
+    }
+    
+    private boolean isLocked() {
+        return QUEUE_LOCKED;
+    }
+    
+    private void copyQueue(Object[] newQueue) {
+
+        int count = 0;
+        for(int i = 0 ; i < QUEUE.length ; i++) {
+            Logger.log("DEBUG", "Queue copy: position: " + Integer.toString(READ_PTR) + " to " + Integer.toString(i));
+            newQueue[i] = QUEUE[READ_PTR];
+            READ_PTR++;
+            if(READ_PTR == QUEUE.length) {
+                READ_PTR = 0;
+            }
+            count = i;
+        }
+        
+        // Queue is coppied, now just need to sort out
+        // WRITE_PTR and READ_PTR;
+        READ_PTR = 0;
+        WRITE_PTR = count+1;
+        QUEUE = newQueue;
+        Logger.log("DEBUG", "Following queue copy, READ_PTR=" + Integer.toString(READ_PTR) + " WRITE_PTR=" + Integer.toString(WRITE_PTR));
+    }
+    
+    private Object getHead() {
+        while(QUEUE[READ_PTR] == null) {
+            // Nothing in the queue, lets wait until something is added
+            try {
+            Thread.sleep(10);
+            }
+            catch(InterruptedException ie) {
+                // do nothing
+            }
+        }
+        lockQueue();
+        Object retVal = QUEUE[READ_PTR];
+        
+        QUEUE[READ_PTR] = null;
+        READ_PTR++;
+        if(READ_PTR == QUEUE.length) {
+            READ_PTR = 0;
+        }
+        unlockQueue();
+        return retVal;
+    }
+    
+    private void initQueue(int size) {
+        Logger.log("INFO", "Creating new queue of size: " + Integer.toString(size));
+        QUEUE = new Object[size];
+        QUEUE_LOCKED = false;
+    }
+    
+    private long now() {
+        return System.currentTimeMillis();
+    }
+    
+    private Object[] QUEUE;
+    private final int DEFAULT_SIZE = 32;
+    private boolean QUEUE_LOCKED;
+    private int WRITE_PTR;
+    private int READ_PTR;
+    private long LAST_READ_TIME;
+    private long LAST_WRITE_TIME;
+}

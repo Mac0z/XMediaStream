@@ -1,0 +1,8 @@
+#!/bin/bash
+CLASSPATH=.:/export/home/ozzy/XMediaStream/jdom.jar:/export/home/ozzy/XMediaStream/mysql-connector-java-5.1.5-bin.jar
+export CLASSPATH
+java XMediaStream_TransactionHandler txn_handler.xml >& XMediaStream_TransactionHandler.log &
+#sleep 3
+#java XMediaStream_SSDPListener XMediaStream_SSDPListener.xml >& XMediaStream_SSDPListener.log &
+#sleep 3
+#java XMediaStream_ExpiredChecker XMediaStream_ExpiredChecker.xml >& XMediaStream_ExpiredChecker.log &

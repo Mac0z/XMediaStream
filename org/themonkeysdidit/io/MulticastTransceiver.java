@@ -1,0 +1,174 @@
+/*
+ ******************************************************************************
+ *
+ * Copyright 2008 Oliver Wardell
+ * This file is part of XMediaStream.
+ *
+ ******************************************************************************
+ */
+ 
+package org.themonkeysdidit.io;
+
+import java.net.*;
+import java.io.*;
+
+import org.themonkeysdidit.util.*;
+
+public class MulticastTransceiver {
+    public MulticastTransceiver(String group, int port, int ttl) throws UnknownHostException, IOException {
+        MULTICAST_GROUP = InetAddress.getByName(group);
+        MULTICAST_PORT = port;
+        MSOCK = new MulticastSocket(MULTICAST_PORT);
+        MSOCK.setTimeToLive(ttl);
+        GROUP_JOINED = false;
+        TX_SEQUENCE_NUMBER = 0;
+        RX_SEQUENCE_NUMBER = 0;
+        FIRST_PACKET  = true;
+    }
+    
+    public boolean joinGroup() throws IOException {
+        if(!isJoined()) {
+            MSOCK.joinGroup(MULTICAST_GROUP);
+            setJoined(true);
+            return true;
+        }
+        else {
+            Logger.log("WARNING", "Already joined to group: " + MULTICAST_GROUP.toString());
+            return false;
+        }
+    }
+    
+    public void leaveGroup() throws IOException {
+        MSOCK.leaveGroup(MULTICAST_GROUP);
+        setJoined(false);
+    }
+    
+    public boolean isJoined() {
+        return GROUP_JOINED;
+    }
+    
+    public boolean transmit(SimpleMessageObject packet) throws IOException {
+        
+        /*
+         * Multicast packets can get dropped on the network, so add a sequence
+         * number to the outgoing message so we can detect a drop.
+         */
+        packet.addInt("MCAST_SEQUENCE_NUMBER", getNextTxSequenceNumber(true));
+        
+        byte[] data = packet.getNetworkPacket();
+        if(data.length + 4 > MAX_DATAGRAM_PACKET_SIZE) {
+            String s = "Unable to transmit packet:" + System.getProperty("line.separator");
+            s.concat(packet.dump());
+            Logger.log("ERROR", s);
+            return false;
+        }
+        else {
+            byte[] packetLength = DataConversions.getBytes(data.length);
+            byte[] bufferForTx = new byte[data.length + 4];
+            for(int i = 0 ; i < bufferForTx.length ; i++) {
+                if(i < 4) {
+                    bufferForTx[i] = packetLength[i];
+                }
+                else {
+                    bufferForTx[i] = data[i-4];
+                }
+            }
+            
+            DatagramPacket p = new DatagramPacket(bufferForTx, bufferForTx.length, MULTICAST_GROUP, MULTICAST_PORT);
+                    
+            if(Logger.isEnabled("NETIO")) {
+                Logger.log("NETIO", "TX >>>" + System.getProperty("line.separator") + packet.dump());
+            }
+            MSOCK.send(p);
+            return true;
+        }
+    }
+    
+    public SimpleMessageObject receive() throws IOException {
+        if(!isJoined()) {
+            Logger.log("WARNING", "Cannot receive data; have not joined a group");
+            return null;
+        }
+        byte[] buf = new byte[MAX_DATAGRAM_PACKET_SIZE];
+        DatagramPacket packet = new DatagramPacket(buf, MAX_DATAGRAM_PACKET_SIZE);
+        MSOCK.receive(packet);
+        byte[] rawData = packet.getData();
+        byte[] len = new byte[4];
+        for(int i = 0 ; i < 4 ; i++) {
+            len[i] = rawData[i];
+        }
+        byte[] payLoad = new byte[DataConversions.getInt(len, 0, len.length)];
+        for(int j = 0 ; j < payLoad.length ; j++) {
+            payLoad[j] = rawData[j+4];
+        }
+        
+        SimpleMessageObject o = SimpleMessageObject.createMessageObject(payLoad);
+        
+        int seqNum = o.getInt("MCAST_SEQUENCE_NUMBER");
+        if(FIRST_PACKET) {
+            setNextRxSequenceNumber(seqNum);
+            FIRST_PACKET = false;
+        }
+        
+        if(seqNum != getNextRxSequenceNumber(false)) {
+            Logger.log("WARNING", "Incorrect sequence number received: " + Integer.toString(seqNum) + " expecting: " + Integer.toString(getNextRxSequenceNumber(false)));
+            Logger.log("WARNING", "Setting next expected sequence number to: " + Integer.toString(seqNum++));
+            setNextRxSequenceNumber(seqNum);
+        }
+        else {
+            getNextRxSequenceNumber(true);
+        }
+        
+        if(Logger.isEnabled("NETIO")) {
+            Logger.log("NETIO", "RX <<<" + System.getProperty("line.separator") + o.dump());
+        }
+        
+        return o;
+    }
+    
+    private void setJoined(boolean status) {
+        GROUP_JOINED = status;
+        if(!status) {
+            FIRST_PACKET = true;
+        }
+    }
+    
+    private int getNextTxSequenceNumber(boolean update) {
+        int retVal = TX_SEQUENCE_NUMBER;
+        if(update) {
+            TX_SEQUENCE_NUMBER++;
+            // Check if we need to wrap round to zero
+            if(TX_SEQUENCE_NUMBER >= MAX_SEQ_NUM) {
+                TX_SEQUENCE_NUMBER = 0;
+            }
+        }
+        
+        return retVal;
+    }
+    
+    private int getNextRxSequenceNumber(boolean update) {
+        int retVal = RX_SEQUENCE_NUMBER;
+        if(update) {
+            RX_SEQUENCE_NUMBER++;
+            if(RX_SEQUENCE_NUMBER >= MAX_SEQ_NUM) {
+                RX_SEQUENCE_NUMBER = 0;
+            }
+        }
+        return retVal;
+    }
+    
+    private void setNextRxSequenceNumber(int val) {
+        RX_SEQUENCE_NUMBER = val;
+    }
+
+    private InetAddress MULTICAST_GROUP;
+    private int MULTICAST_PORT;
+    private byte TTL;
+    private MulticastSocket MSOCK;
+    private boolean GROUP_JOINED;
+    private final int MAX_DATAGRAM_PACKET_SIZE = 128 * 1024; // 128KB
+    private int TX_SEQUENCE_NUMBER;
+    private int RX_SEQUENCE_NUMBER;
+    private final int MAX_SEQ_NUM = 50000;
+    private boolean FIRST_PACKET;
+}

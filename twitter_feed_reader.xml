@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE twitter_feed_reader SYSTEM "twitter_feed_reader.dtd">
+<twitter_feed_reader>
+    <txn_handler>
+        <hostname>192.168.0.19</hostname>
+        <port>7000</port>
+    </txn_handler>
+
+    <logging>
+        <enabled_levels>INFO WARNING ERROR</enabled_levels>
+    </logging>
+    
+    <twitter>
+        <feed_url>http://stream.twitter.com/1/statuses/sample.json</feed_url>
+        <username>Mac0z</username>
+        <password>Ep1ph0ne</password>
+    </twitter>
+
+</twitter_feed_reader>
+

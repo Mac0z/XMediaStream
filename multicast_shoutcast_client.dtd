@@ -1,0 +1,18 @@
+<!ELEMENT shoutcast_client (mysql, general, txn_handler, multicast)>
+<!ELEMENT mysql (hostname, username, password, database, port)>
+<!ELEMENT hostname (#PCDATA)>
+<!ELEMENT username (#PCDATA)>
+<!ELEMENT password (#PCDATA)>
+<!ELEMENT database (#PCDATA)>
+<!ELEMENT port (#PCDATA)>
+<!ELEMENT general (batch_time, batch_size, source_name, genres)>
+<!ELEMENT batch_time (#PCDATA)>
+<!ELEMENT batch_size (#PCDATA)>
+<!ELEMENT source_name (#PCDATA)>
+<!ELEMENT genres (#PCDATA)>
+<!ELEMENT txn_handler ( hostname, port)>
+<!ELEMENT multicast (address, port, ttl)>
+<!ELEMENT address (#PCDATA)>
+<!ELEMENT ttl (#PCDATA)>
+<!ELEMENT logging (enabled_levels)>
+<!ELEMENT enabled_levels (#PCDATA)>

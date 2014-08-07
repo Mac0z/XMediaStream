@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE targeted_shoutcast_client SYSTEM "targeted_shoutcast_client.dtd">
+<targeted_shoutcast_client>
+    <mysql>
+        <hostname>localhost</hostname>
+        <username>xms</username>
+        <password>xms</password>
+        <database>XMediaStream_dev</database>
+        <port>3306</port>
+    </mysql>
+    
+    <general>
+        <batch_time>100</batch_time>
+        <batch_size>32768</batch_size>
+        <source_name>scanned</source_name>
+        <genres>rock,metal,pop,alternative</genres>
+        <minimum_party_number>5</minimum_party_number>
+        <minimum_dinner_party_number>2</minimum_dinner_party_number>
+        <user_song_percentage>90</user_song_percentage>
+        <user_mode_file>/export/home/ozzy/XMediaStream/user_mode.mp3</user_mode_file>
+        <random_mode_file>/export/home/ozzy/XMediaStream/random_mode.mp3</random_mode_file>
+        <party_mode_file>/export/home/ozzy/XMediaStream/party_mode.mp3</party_mode_file>
+        <dinner_party_mode_file>/export/home/ozzy/XMediaStream/dinner_party_mode.mp3</dinner_party_mode_file>
+
+        <defined_users>oliver|gemma</defined_users>
+
+        <oliver>
+            Metallica|My Chemical Romance|Slash's Snakepit|Rage Against The Machine|Guns N' Roses|The Offspring|Nirvana|Blink-182|Velvet Revolver|Red Hot Chili Peppers|Megadeth|Goldfinger|The Killers|ZZ Top|Whitesnake|The Black Crowes|Feeder|Iron Maiden|Foo Fighters|Sum 41|Green Day|Audioslave|Wolfmother|Ugly Kid Joe
+        </oliver>
+
+        <gemma>
+            Jack Johnson|Ben Folds Five|R.E.M.|The Killers|Girls Aloud|Kylie Minogue|Andy Williams|Zero 7|Queen|The Kinks|Robbie Williams|Barenaked Ladies
+        </gemma>
+
+    </general>
+    
+    <txn_handler>
+        <hostname>localhost</hostname>
+        <port>7000</port>
+    </txn_handler>
+
+    <multicast>
+        <address>224.0.1.2</address>
+        <port>1234</port>
+        <ttl>0</ttl>
+    </multicast>
+
+    <logging>
+        <enabled_levels>INFO WARNING ERROR</enabled_levels>
+    </logging>
+    
+</targeted_shoutcast_client>
+
+

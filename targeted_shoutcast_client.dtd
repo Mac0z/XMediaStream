@@ -1,0 +1,25 @@
+<!ELEMENT shoutcast_client (mysql, general, txn_handler)>
+<!ELEMENT mysql (hostname, username, password, database, port)>
+<!ELEMENT hostname (#PCDATA)>
+<!ELEMENT username (#PCDATA)>
+<!ELEMENT password (#PCDATA)>
+<!ELEMENT database (#PCDATA)>
+<!ELEMENT port (#PCDATA)>
+<!ELEMENT general (batch_time, batch_size, source_name, genres, minimum_party_number, minimum_dinner_party_number, user_song_percentage, user_mode_file, random_mode_file, party_mode_file, dinner_party_mode_file, defined_users, oliver, gemma)>
+<!ELEMENT batch_time (#PCDATA)>
+<!ELEMENT batch_size (#PCDATA)>
+<!ELEMENT source_name (#PCDATA)>
+<!ELEMENT genres (#PCDATA)>
+<!ELEMENT minimum_party_number (#PCDATA)>
+<!ELEMENT minimum_dinner_party_number (#PCDATA)>
+<!ELEMENT user_song_percentage (#PCDATA)>
+<!ELEMENT user_mode_file (#PCDATA)>
+<!ELEMENT random_mode_file (#PCDATA)>
+<!ELEMENT party_mode_file (#PCDATA)>
+<!ELEMENT dinner_party_mode_file (#PCDATA)>
+<!ELEMENT defined_users (#PCDATA)>
+<!ELEMENT oliver (#PCDATA)>
+<!ELEMENT gemma (#PCDATA)>
+<!ELEMENT txn_handler ( hostname, port)>
+<!ELEMENT logging (enabled_levels)>
+<!ELEMENT enabled_levels (#PCDATA)>

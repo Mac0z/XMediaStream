@@ -1,0 +1,7 @@
+<!ELEMENT ssdp_listener (txn_handler, logging, multicast)>
+<!ELEMENT logging (enabled_levels)>
+<!ELEMENT enabled_levels (#PCDATA)>
+<!ELEMENT multicast (address, port)>
+<!ELEMENT address (#PCDATA)>
+<!ELEMENT port (#PCDATA)>
+

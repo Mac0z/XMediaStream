@@ -1,0 +1,120 @@
+/*
+ ******************************************************************************
+ *
+ * Copyright 2009 Oliver Wardell
+ * This file is part of XMediaStream.
+ *
+ ******************************************************************************
+ */
+
+package org.themonkeysdidit.db;
+
+import java.sql.*;
+import java.util.*;
+import org.themonkeysdidit.io.*;
+import org.themonkeysdidit.util.*;
+ 
+public class SSDPTxnHandler implements TxnHandlerInterface {
+    public SSDPTxnHandler() {
+    }
+    
+    public boolean handleTxn(SimpleMessageObject txn, MySQL_DatabaseHandler dbh) throws SQLException {
+        
+        String txnType = txn.getString("TXN_TYPE");
+        if(txnType.compareTo("TXN_ADD_UPNP_DEVICE") == 0) {
+            return txnAddUpnpDevice(txn, dbh);
+        }
+        else if(txnType.compareTo("TXN_REMOVE_UPNP_DEVICE") == 0) {
+            return txnRemoveUpnpDevice(txn, dbh);
+        }
+        else {
+            return false;
+        }
+    }
+    
+    public void init(MySQL_DatabaseHandler dbh) throws SQLException {
+        
+    }
+    private boolean txnAddUpnpDevice(SimpleMessageObject txn, MySQL_DatabaseHandler dbh) throws SQLException {
+        // Does this device already exist?
+        if(deviceExists(txn.getString("USN"), dbh)) {
+            return updateExpireTime(txn.getString("USN"), txn.getLong("EXPIRE_TIME"), dbh);
+        }
+        else {
+            return addDevice(txn, dbh);
+        }
+    }
+    
+    private boolean txnRemoveUpnpDevice(SimpleMessageObject txn, MySQL_DatabaseHandler dbh) throws SQLException {
+        StringBuffer sql = new StringBuffer();
+        sql.append("DELETE FROM dynamic_upnp_instances WHERE usn=\'");
+        sql.append(txn.getString("USN"));
+        sql.append("\'");
+        
+        if(dbh.delete(sql.toString()) > 0) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    
+    private boolean updateExpireTime(String usn, long expireTime, MySQL_DatabaseHandler dbh) throws SQLException {
+        Timestamp time = new Timestamp(expireTime);
+        StringBuffer sql = new StringBuffer();
+        sql.append("UPDATE dynamic_upnp_instances SET expire_time=`'");
+        sql.append(time);
+        sql.append("\' WHERE usn='");
+        sql.append(usn);
+        sql.append("\'");
+        if(dbh.update(sql.toString()) > 0) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    
+    private boolean addDevice(SimpleMessageObject txn, MySQL_DatabaseHandler dbh) throws SQLException {
+        StringBuffer sql = new StringBuffer();
+        Timestamp time = new Timestamp(txn.getLong("EXPIRE_TIME"));
+        sql.append("INSERT INTO dynamic_upnp_instances(host, location, nt, usn, bootid, config_id, search_port, expire_time) VALUES(\'");
+        sql.append(txn.getString("HOST"));
+        sql.append("\', \'");
+        sql.append(txn.getString("LOCATION"));
+        sql.append("\', \'");
+        sql.append(txn.getString("NT"));
+        sql.append("\', \'");
+        sql.append(txn.getString("USN"));
+        sql.append("\', ");
+        sql.append(txn.getInt("BOOTID.UPNP.ORG"));
+        sql.append(", ");
+        sql.append(txn.getInt("CONFIG.UPNP.ORG"));
+        sql.append(", ");
+        sql.append(txn.getInt("SEARCHPORT.UPNP.ORG"));
+        sql.append(", \'");
+        sql.append(time);
+        sql.append("\')");
+        if(dbh.insert(sql.toString()) > 0) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    
+    private boolean deviceExists(String usn, MySQL_DatabaseHandler dbh) throws SQLException {
+        StringBuffer sql = new StringBuffer();
+        sql.append("SELECT * FROM dynamic_upnp_instances WHERE usn=\'");
+        sql.append(usn);
+        sql.append("\'");
+        
+        DatabaseResult dr = dbh.query(sql.toString());
+        if(dr.getNumRows() > 0) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+}
